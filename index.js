@@ -40,12 +40,12 @@ async function run() {
     //services
     app.get("/services", async (req, res) => {
       const query = {};
-      const name = req.query.name;
+      const size = req.query.size;
       const findData = TouristCollection.find(query);
-      if (name == "hasan") {
-        const services = await findData.limit(3).toArray();
+      if (size) {
+        const services = await findData.limit(parseInt(size)).toArray();
         res.send(services);
-      } else {
+      } else {  
         const services = await findData.toArray();
         res.send(services);
       } 
