@@ -6,12 +6,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//user : service-review-11
-//pass: FETpI9p1dF55OLO7
-
 const DBUser = process.env.DB_USER;
 const DbPassword = process.env.DB_PASSWORD;
-// console.log(DBUser,DbPassword)
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${DBUser}:${DbPassword}@cluster0.bfv30pl.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -38,6 +34,27 @@ async function run() {
     const TouristInfo = client.db("Services-review").collection("tourist-Info");
 
     //services
+    app.post("/add-service", async (req, res) => {
+      const body = req.body;
+      
+      // Get the count of documents to set placeId
+      const count = await TouristCollection.countDocuments();
+      const placeId = count + 1;
+      
+      const service = {
+      placeId: placeId,
+      name: body.serviceName,
+      img: body.serviceImg,
+      price: body.servicePrice,
+      details: body.details,
+      rating: 4,
+      accomodation: body.accomodation ?? "",
+      meal: body.meal ?? "",
+      personalService: body.meal ?? "",
+      };
+      const insertServiceInfo = await TouristCollection.insertOne(service);
+      res.send({ success: true, insertServiceInfo });
+    });
     app.get("/services", async (req, res) => {
       const query = {};
       const size = req.query.size;
@@ -45,10 +62,10 @@ async function run() {
       if (size) {
         const services = await findData.limit(parseInt(size)).toArray();
         res.send(services);
-      } else {  
+      } else {
         const services = await findData.toArray();
         res.send(services);
-      } 
+      }
       // console.log(req.query);
     });
     app.get("/services/:id", async (req, res) => {
@@ -58,13 +75,25 @@ async function run() {
       res.send(findService);
       // console.log(findService)
     });
-
+    app.delete("/services/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id)
+      const query = { _id: new ObjectId(id) };
+      const deleteService = await TouristCollection.deleteOne(query);
+      res.send({
+        success: true,
+        deleteService,
+        message: "Your service is deleted successfully.",
+      });
+    });
     //review -part
     app.post("/review", async (req, res) => {
       const reviewBody = req.body;
       const result = await ReviewCollection.insertOne(reviewBody);
       res.send({
-        result,status:'true',message:'Your review is submitted successfully'
+        result,
+        status: "true",
+        message: "Your review is submitted successfully",
       });
     });
     app.get("/review/:id", async (req, res) => {
@@ -142,15 +171,17 @@ async function run() {
       res.send(result);
     });
     //delete service
-    app.delete('/custom-service/:id',async(req,res)=>{
+    app.delete("/custom-service/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id)
-      const query ={_id :new ObjectId(id)}
-      const deleteService = await CustomService.deleteOne(query)
+      console.log(id);
+      const query = { _id: new ObjectId(id) };
+      const deleteService = await CustomService.deleteOne(query);
       res.send({
-        deleteService,status:true,message:'Your service is deleted successfully.'
-      })
-    })
+        deleteService,
+        status: true,
+        message: "Your service is deleted successfully.",
+      });
+    });
 
     //checkout (tourist info)
     app.post("/tourist-Info", async (req, res) => {
@@ -185,15 +216,18 @@ async function run() {
       const info = await result.toArray();
       res.send(info);
     });
-    app.delete('/tourist-Info/:id',async(req,res) =>{
-      const id = req.params.id
+    app.delete("/tourist-Info/:id", async (req, res) => {
+      const id = req.params.id;
       // console.log(id)
-      const query = {placeId : id};
-      const deleteInfo  = await TouristInfo.deleteOne(query)
+      const query = { placeId: id };
+      const deleteInfo = await TouristInfo.deleteOne(query);
       res.send({
-        deleteInfo,status:true,message:'Your Information is deleted successfully. Please purchase another one...'
-      })
-    })
+        deleteInfo,
+        status: true,
+        message:
+          "Your Information is deleted successfully. Please purchase another one...",
+      });
+    });
   } finally {
   }
 }
